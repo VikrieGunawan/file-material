@@ -27,9 +27,9 @@ object PrivilegedServiceUtils {
         ),
         PrivilegedAppInfo(
             name = "Stellar",
-            packageName = "com.stellar.app",
+            packageName = "roro.stellar.manager",
             isInstalled = false,
-            downloadUrl = "https://github.com/a13e300/Stellar",
+            downloadUrl = "https://github.com/roro2239/Stellar",
             description = "Modern Material You Shizuku fork with extended capabilities."
         ),
         PrivilegedAppInfo(
@@ -56,11 +56,12 @@ object PrivilegedServiceUtils {
             } catch (e: Exception) {
                 // Also check alternative known package names for Stellar
                 if (app.name == "Stellar") {
-                    try {
-                        pm.getPackageInfo("io.github.a13e300.stellar", 0) != null ||
-                                pm.getPackageInfo("com.stellar.shizuku", 0) != null
-                    } catch (_: Exception) {
-                        false
+                    listOf("roro.stellar.manager", "com.stellar.app", "io.github.a13e300.stellar", "com.stellar.shizuku").any { pkg ->
+                        try {
+                            pm.getPackageInfo(pkg, 0) != null
+                        } catch (_: Exception) {
+                            false
+                        }
                     }
                 } else {
                     false
@@ -91,8 +92,13 @@ object PrivilegedServiceUtils {
 
     fun launchApp(context: Context, packageName: String): Boolean {
         return try {
-            val intent = context.packageManager.getLaunchIntentForPackage(packageName)
-                ?: context.packageManager.getLaunchIntentForPackage("io.github.a13e300.stellar")
+            var intent = context.packageManager.getLaunchIntentForPackage(packageName)
+            if (intent == null && (packageName == "roro.stellar.manager" || packageName.contains("stellar"))) {
+                for (altPkg in listOf("roro.stellar.manager", "com.stellar.app", "io.github.a13e300.stellar", "com.stellar.shizuku")) {
+                    intent = context.packageManager.getLaunchIntentForPackage(altPkg)
+                    if (intent != null) break
+                }
+            }
             if (intent != null) {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)

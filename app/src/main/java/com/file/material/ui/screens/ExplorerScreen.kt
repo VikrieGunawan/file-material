@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material.icons.automirrored.rounded.ViewList
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CreateNewFolder
 import androidx.compose.material.icons.rounded.Delete
@@ -39,7 +40,6 @@ import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material.icons.rounded.ViewList
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -73,6 +73,7 @@ import com.file.material.data.model.FileItem
 import com.file.material.data.model.SortBy
 import com.file.material.data.model.ViewMode
 import com.file.material.ui.components.BreadcrumbBar
+import com.file.material.ui.components.ExpressiveLoadingIndicator
 import com.file.material.ui.components.FileGridItem
 import com.file.material.ui.components.FileListItem
 import com.file.material.ui.theme.ButtonShapeExpressive
@@ -98,6 +99,7 @@ fun ExplorerScreen(
     val viewMode by viewModel.viewMode.collectAsState()
     val sortBy by viewModel.sortBy.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     var isSearchActive by remember { mutableStateOf(false) }
     var isSortMenuExpanded by remember { mutableStateOf(false) }
@@ -229,7 +231,7 @@ fun ExplorerScreen(
                             )
                         }) {
                             Icon(
-                                imageVector = if (viewMode == ViewMode.LIST) Icons.Rounded.GridView else Icons.Rounded.ViewList,
+                                imageVector = if (viewMode == ViewMode.LIST) Icons.Rounded.GridView else Icons.AutoMirrored.Rounded.ViewList,
                                 contentDescription = "Toggle view"
                             )
                         }
@@ -346,7 +348,16 @@ fun ExplorerScreen(
                 }
             }
 
-            if (fileList.isEmpty()) {
+            if (isLoading && fileList.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ExpressiveLoadingIndicator(size = 52.dp)
+                }
+            } else if (fileList.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

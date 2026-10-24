@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.file.material">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Storage Permissions -->
     <uses-permission
@@ -21,6 +20,8 @@
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+    <!-- Shizuku / Stellar Privileged Permission -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 
     <queries>
         <intent>
@@ -28,6 +29,7 @@
             <data android:mimeType="*/*" />
         </intent>
         <package android:name="moe.shizuku.privileged.api" />
+        <package android:name="roro.stellar.manager" />
         <package android:name="com.stellar.app" />
         <package android:name="io.github.a13e300.stellar" />
         <package android:name="com.stellar.shizuku" />

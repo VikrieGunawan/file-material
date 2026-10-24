@@ -9,8 +9,10 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.BackEventCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,8 +22,6 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -29,7 +29,12 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Home
@@ -164,26 +169,52 @@ fun MainAppContent(
     hasStoragePermission: Boolean,
     onRequestPermission: () -> Unit
 ) {
+    val predictiveBackEnabled by viewModel.predictiveBackEnabled.collectAsState()
+    var isPopping by remember { mutableStateOf(false) }
+
     // BackStack navigation: Back returns to previously opened screen instead of closing app
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
     val currentScreen = backStack.lastOrNull() ?: Screen.Home
 
     fun navigateTo(screen: Screen) {
         if (backStack.lastOrNull() != screen) {
+            isPopping = false
             backStack.add(screen)
         }
     }
 
     fun popBack(): Boolean {
         if (backStack.size > 1) {
+            isPopping = true
             backStack.removeAt(backStack.lastIndex)
             return true
         }
         return false
     }
 
-    BackHandler(enabled = backStack.size > 1) {
-        popBack()
+    // Predictive Back Gesture with interactive gesture progress
+    var backProgress by remember { mutableFloatStateOf(0f) }
+    var isBackGestureActive by remember { mutableStateOf(false) }
+
+    if (predictiveBackEnabled && backStack.size > 1) {
+        PredictiveBackHandler(enabled = backStack.size > 1) { progress: Flow<BackEventCompat> ->
+            try {
+                isBackGestureActive = true
+                progress.collect { backEvent ->
+                    backProgress = backEvent.progress
+                }
+                popBack()
+            } catch (e: CancellationException) {
+                // User cancelled gesture by swiping back to edge
+            } finally {
+                backProgress = 0f
+                isBackGestureActive = false
+            }
+        }
+    } else {
+        BackHandler(enabled = backStack.size > 1) {
+            popBack()
+        }
     }
 
     // Modal Bottom Sheet & Dialog States
@@ -240,7 +271,6 @@ fun MainAppContent(
     var restrictedFolderTarget by remember { mutableStateOf<File?>(null) }
 
     val confirmDeleteSetting by viewModel.confirmDelete.collectAsState()
-    val predictiveBackEnabled by viewModel.predictiveBackEnabled.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -285,29 +315,30 @@ fun MainAppContent(
         AnimatedContent(
             targetState = currentScreen,
             transitionSpec = {
-                if (predictiveBackEnabled) {
-                    (slideInHorizontally(
-                        animationSpec = tween(350, easing = FastOutSlowInEasing),
-                        initialOffsetX = { fullWidth -> (fullWidth * 0.2f).toInt() }
-                    ) + scaleIn(
-                        animationSpec = tween(350, easing = FastOutSlowInEasing),
-                        initialScale = 0.95f
-                    ) + fadeIn(animationSpec = tween(300))).togetherWith(
-                        slideOutHorizontally(
-                            animationSpec = tween(350, easing = FastOutSlowInEasing),
-                            targetOffsetX = { fullWidth -> -(fullWidth * 0.2f).toInt() }
-                        ) + scaleOut(
-                            animationSpec = tween(350, easing = FastOutSlowInEasing),
-                            targetScale = 0.95f
-                        ) + fadeOut(animationSpec = tween(250))
-                    )
-                } else {
-                    fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(200))
-                }
+                val goingBack = isPopping
+                (slideInHorizontally(
+                    animationSpec = tween(300, easing = FastOutSlowInEasing),
+                    initialOffsetX = { fullWidth -> if (goingBack) -fullWidth else fullWidth }
+                ) + fadeIn(animationSpec = tween(220))).togetherWith(
+                    slideOutHorizontally(
+                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                        targetOffsetX = { fullWidth -> if (goingBack) fullWidth else -fullWidth }
+                    ) + fadeOut(animationSpec = tween(180))
+                )
             },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = innerPadding.calculateBottomPadding()),
+                .padding(bottom = innerPadding.calculateBottomPadding())
+                .graphicsLayer {
+                    if (isBackGestureActive && backProgress > 0f) {
+                        translationX = backProgress * 120.dp.toPx()
+                        alpha = 1f - (backProgress * 0.2f)
+                        scaleX = 1f - (backProgress * 0.04f)
+                        scaleY = 1f - (backProgress * 0.04f)
+                        shape = RoundedCornerShape((backProgress * 24).dp)
+                        clip = true
+                    }
+                },
             label = "ScreenTransition"
         ) { screen ->
             when (screen) {

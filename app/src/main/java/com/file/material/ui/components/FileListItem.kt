@@ -13,13 +13,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
 import androidx.compose.material.icons.rounded.Android
 import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.FolderZip
 import androidx.compose.material.icons.rounded.Image
-import androidx.compose.material.icons.rounded.InsertDriveFile
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material3.Checkbox
@@ -88,20 +88,14 @@ fun FileListItem(
                 )
             }
 
-            Box(
+            FileThumbnail(
+                item = item,
                 modifier = Modifier
                     .size(46.dp)
-                    .clip(IconContainerShapeExpressive)
-                    .background(bgColor),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+                    .clip(IconContainerShapeExpressive),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                iconSize = 24.dp
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -180,7 +174,7 @@ fun getFileVisuals(item: FileItem): Triple<ImageVector, Color, Color> {
                 CategoryArchivesColor.copy(alpha = 0.16f)
             )
             else -> Triple(
-                Icons.Rounded.InsertDriveFile,
+                Icons.AutoMirrored.Rounded.InsertDriveFile,
                 MaterialTheme.colorScheme.onSurfaceVariant,
                 MaterialTheme.colorScheme.surfaceContainerHigh
             )

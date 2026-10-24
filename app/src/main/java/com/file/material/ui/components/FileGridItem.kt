@@ -6,10 +6,12 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -78,16 +80,18 @@ fun FileGridItem(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
-                        .clip(IconContainerShapeExpressive)
-                        .background(bgColor),
+                        .fillMaxWidth()
+                        .height(64.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = tint,
-                        modifier = Modifier.size(32.dp)
+                    FileThumbnail(
+                        item = item,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                        iconSize = 32.dp,
+                        fallbackSize = 56.dp
                     )
                 }
 

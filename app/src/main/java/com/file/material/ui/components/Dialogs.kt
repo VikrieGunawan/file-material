@@ -28,8 +28,8 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DriveFileRenameOutline
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.automirrored.rounded.Launch
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Launch
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.OpenInBrowser
 import androidx.compose.material.icons.rounded.Security
@@ -564,7 +564,7 @@ fun RestrictedFolderDialog(
                                     contentColor = MaterialTheme.colorScheme.onPrimary
                                 )
                             ) {
-                                Icon(Icons.Rounded.Launch, null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.AutoMirrored.Rounded.Launch, null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text("Open ${installedApp.name}")
                             }
@@ -628,7 +628,7 @@ fun RestrictedFolderDialog(
                             Text("Shizuku")
                         }
                         OutlinedButton(
-                            onClick = { PrivilegedServiceUtils.openUrl(context, "https://github.com/a13e300/Stellar") },
+                            onClick = { PrivilegedServiceUtils.openUrl(context, "https://github.com/roro2239/Stellar") },
                             shape = ButtonShapeExpressive,
                             modifier = Modifier.weight(1f)
                         ) {
