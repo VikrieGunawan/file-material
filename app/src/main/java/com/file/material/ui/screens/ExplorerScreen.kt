@@ -158,7 +158,7 @@ fun ExplorerScreen(
                             isSearchActive = false
                             viewModel.setSearchQuery("")
                         }) {
-                            Icon(Icons.AutoMirrored.rounded.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                         }
                         OutlinedTextField(
                             value = searchQuery,
@@ -193,7 +193,7 @@ fun ExplorerScreen(
                             val handled = viewModel.navigateUp()
                             if (!handled) onNavigateBack()
                         }) {
-                            Icon(Icons.AutoMirrored.rounded.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                         }
                     },
                     actions = {
@@ -216,7 +216,7 @@ fun ExplorerScreen(
                         // Sort Menu
                         Box {
                             IconButton(onClick = { isSortMenuExpanded = true }) {
-                                Icon(Icons.AutoMirrored.rounded.Sort, contentDescription = "Sort")
+                                Icon(Icons.AutoMirrored.Rounded.Sort, contentDescription = "Sort")
                             }
                             DropdownMenu(
                                 expanded = isSortMenuExpanded,
