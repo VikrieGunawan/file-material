@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -150,12 +151,11 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 pair.forEach { category ->
-                                    Box(modifier = Modifier.weight(1f)) {
-                                        CategoryCard(
-                                            category = category,
-                                            onClick = { onNavigateToCategory(category) }
-                                        )
-                                    }
+                                    CategoryCard(
+                                        category = category,
+                                        modifier = Modifier.weight(1f),
+                                        onClick = { onNavigateToCategory(category) }
+                                    )
                                 }
                                 if (pair.size == 1) {
                                     Spacer(modifier = Modifier.weight(1f))
