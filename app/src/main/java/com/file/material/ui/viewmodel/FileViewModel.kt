@@ -50,6 +50,21 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
     private val _darkTheme = MutableStateFlow<Boolean?>(null)
     val darkTheme: StateFlow<Boolean?> = _darkTheme.asStateFlow()
 
+    private val _amoledDark = MutableStateFlow(false)
+    val amoledDark: StateFlow<Boolean> = _amoledDark.asStateFlow()
+
+    private val _compactView = MutableStateFlow(false)
+    val compactView: StateFlow<Boolean> = _compactView.asStateFlow()
+
+    private val _showFileExtensions = MutableStateFlow(true)
+    val showFileExtensions: StateFlow<Boolean> = _showFileExtensions.asStateFlow()
+
+    private val _confirmDelete = MutableStateFlow(true)
+    val confirmDelete: StateFlow<Boolean> = _confirmDelete.asStateFlow()
+
+    private val _showFullPaths = MutableStateFlow(false)
+    val showFullPaths: StateFlow<Boolean> = _showFullPaths.asStateFlow()
+
     private val _selectedFiles = MutableStateFlow<Set<FileItem>>(emptySet())
     val selectedFiles: StateFlow<Set<FileItem>> = _selectedFiles.asStateFlow()
 
@@ -219,4 +234,50 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
             onResult(success)
         }
     }
+
+    fun setAmoledDark(enabled: Boolean) {
+        _amoledDark.value = enabled
+    }
+
+    fun setCompactView(enabled: Boolean) {
+        _compactView.value = enabled
+    }
+
+    fun setShowFileExtensions(enabled: Boolean) {
+        _showFileExtensions.value = enabled
+    }
+
+    fun setConfirmDelete(enabled: Boolean) {
+        _confirmDelete.value = enabled
+    }
+
+    fun setShowFullPaths(enabled: Boolean) {
+        _showFullPaths.value = enabled
+    }
+
+    fun cleanTemporaryFiles(onResult: (Long, Int) -> Unit) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val (bytes, count) = repository.cleanTemporaryFiles()
+            _storageInfo.value = repository.getStorageInfo()
+            _isLoading.value = false
+            onResult(bytes, count)
+        }
+    }
+
+    fun resetSettingsToDefault() {
+        _dynamicColor.value = true
+        _darkTheme.value = null
+        _amoledDark.value = false
+        _showHidden.value = false
+        _compactView.value = false
+        _showFileExtensions.value = true
+        _confirmDelete.value = true
+        _showFullPaths.value = false
+        _sortBy.value = SortBy.NAME
+        _sortOrder.value = SortOrder.ASCENDING
+        _viewMode.value = ViewMode.LIST
+        refresh()
+    }
 }
+

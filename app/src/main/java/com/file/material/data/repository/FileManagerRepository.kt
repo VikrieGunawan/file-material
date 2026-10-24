@@ -214,4 +214,36 @@ class FileManagerRepository(private val context: Context) {
         }
         allSuccess
     }
+
+    suspend fun cleanTemporaryFiles(): Pair<Long, Int> = withContext(Dispatchers.IO) {
+        var totalCleanedBytes = 0L
+        var totalFilesDeleted = 0
+
+        fun cleanDir(dir: File?) {
+            if (dir == null || !dir.exists() || !dir.isDirectory) return
+            val files = dir.listFiles() ?: return
+            for (f in files) {
+                if (f.isDirectory) {
+                    cleanDir(f)
+                } else if (f.isFile) {
+                    val name = f.name.lowercase()
+                    if (name.endsWith(".tmp") || name.endsWith(".temp") || name.endsWith(".cache") || name.endsWith(".log") || name.startsWith("cache_")) {
+                        val len = f.length()
+                        if (f.delete()) {
+                            totalCleanedBytes += len
+                            totalFilesDeleted++
+                        }
+                    }
+                }
+            }
+        }
+
+        cleanDir(context.cacheDir)
+        cleanDir(context.externalCacheDir)
+        val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        cleanDir(downloads)
+
+        Pair(totalCleanedBytes, totalFilesDeleted)
+    }
 }
+

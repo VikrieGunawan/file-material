@@ -137,22 +137,30 @@ fun HomeScreen(
                         )
                     }
 
-                    // 2-column or 3-column category grid
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(340.dp),
-                        contentPadding = PaddingValues(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        userScrollEnabled = false
+                    // Dynamic, responsive category rows (displays all categories without bottom clipping)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        items(FileCategory.values().take(6)) { category ->
-                            CategoryCard(
-                                category = category,
-                                onClick = { onNavigateToCategory(category) }
-                            )
+                        val allCategories = FileCategory.entries
+                        val rows = allCategories.chunked(2)
+                        rows.forEach { pair ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                pair.forEach { category ->
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        CategoryCard(
+                                            category = category,
+                                            onClick = { onNavigateToCategory(category) }
+                                        )
+                                    }
+                                }
+                                if (pair.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
                 }

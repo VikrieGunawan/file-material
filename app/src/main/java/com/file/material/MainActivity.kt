@@ -10,6 +10,7 @@ import android.os.Environment
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,7 +22,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Home
@@ -37,12 +37,12 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -60,7 +60,6 @@ import com.file.material.ui.screens.SettingsScreen
 import com.file.material.ui.theme.FileMaterialTheme
 import com.file.material.ui.viewmodel.FileViewModel
 import com.file.material.utils.FileUtils
-import kotlinx.coroutines.launch
 
 sealed class Screen {
     object Home : Screen()
@@ -91,11 +90,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             val dynamicColor by viewModel.dynamicColor.collectAsState()
             val darkThemeSetting by viewModel.darkTheme.collectAsState()
+            val amoledDark by viewModel.amoledDark.collectAsState()
             val isDark = darkThemeSetting ?: isSystemInDarkTheme()
 
             FileMaterialTheme(
                 darkTheme = isDark,
-                dynamicColor = dynamicColor
+                dynamicColor = dynamicColor,
+                amoledDark = amoledDark
             ) {
                 MainAppContent(
                     viewModel = viewModel,
@@ -151,7 +152,27 @@ fun MainAppContent(
     hasStoragePermission: Boolean,
     onRequestPermission: () -> Unit
 ) {
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
+    // BackStack navigation: Back returns to previously opened screen instead of closing app
+    val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
+    val currentScreen = backStack.lastOrNull() ?: Screen.Home
+
+    fun navigateTo(screen: Screen) {
+        if (backStack.lastOrNull() != screen) {
+            backStack.add(screen)
+        }
+    }
+
+    fun popBack(): Boolean {
+        if (backStack.size > 1) {
+            backStack.removeAt(backStack.lastIndex)
+            return true
+        }
+        return false
+    }
+
+    BackHandler(enabled = backStack.size > 1) {
+        popBack()
+    }
 
     // Dialog & Sheet States
     var activeActionItem by remember { mutableStateOf<FileItem?>(null) }
@@ -161,33 +182,41 @@ fun MainAppContent(
     var showDeleteBatchDialog by remember { mutableStateOf(false) }
     var propertiesTargetItem by remember { mutableStateOf<FileItem?>(null) }
 
+    val confirmDeleteSetting by viewModel.confirmDelete.collectAsState()
+
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val coroutineScope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             if (currentScreen !is Screen.Category) {
+                // Flush bottom navigation bar: background rests completely on bottom screen surface
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    modifier = Modifier.clip(CircleShape)
+                    tonalElevation = 0.dp
                 ) {
                     NavigationBarItem(
                         selected = currentScreen is Screen.Home,
-                        onClick = { currentScreen = Screen.Home },
+                        onClick = {
+                            if (currentScreen !is Screen.Home) navigateTo(Screen.Home)
+                        },
                         icon = { Icon(Icons.Rounded.Home, contentDescription = stringResource(R.string.nav_home)) },
                         label = { Text(stringResource(R.string.nav_home)) }
                     )
                     NavigationBarItem(
                         selected = currentScreen is Screen.Explorer,
-                        onClick = { currentScreen = Screen.Explorer },
+                        onClick = {
+                            if (currentScreen !is Screen.Explorer) navigateTo(Screen.Explorer)
+                        },
                         icon = { Icon(Icons.Rounded.Folder, contentDescription = stringResource(R.string.nav_browse)) },
                         label = { Text(stringResource(R.string.nav_browse)) }
                     )
                     NavigationBarItem(
                         selected = currentScreen is Screen.Settings,
-                        onClick = { currentScreen = Screen.Settings },
+                        onClick = {
+                            if (currentScreen !is Screen.Settings) navigateTo(Screen.Settings)
+                        },
                         icon = { Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.nav_settings)) },
                         label = { Text(stringResource(R.string.nav_settings)) }
                     )
@@ -209,16 +238,16 @@ fun MainAppContent(
                         viewModel = viewModel,
                         hasStoragePermission = hasStoragePermission,
                         onRequestPermission = onRequestPermission,
-                        onNavigateToExplorer = { currentScreen = Screen.Explorer },
+                        onNavigateToExplorer = { navigateTo(Screen.Explorer) },
                         onNavigateToCategory = { category ->
                             viewModel.loadCategory(category)
-                            currentScreen = Screen.Category(category)
+                            navigateTo(Screen.Category(category))
                         },
-                        onNavigateToSettings = { currentScreen = Screen.Settings },
+                        onNavigateToSettings = { navigateTo(Screen.Settings) },
                         onFileClick = { item ->
                             if (item.isDirectory) {
                                 viewModel.navigateTo(item.file)
-                                currentScreen = Screen.Explorer
+                                navigateTo(Screen.Explorer)
                             } else {
                                 FileUtils.openFile(context, item.file)
                             }
@@ -231,7 +260,7 @@ fun MainAppContent(
                 is Screen.Explorer -> {
                     ExplorerScreen(
                         viewModel = viewModel,
-                        onNavigateBack = { currentScreen = Screen.Home },
+                        onNavigateBack = { popBack() },
                         onFileClick = { item ->
                             if (item.isDirectory) {
                                 viewModel.navigateTo(item.file)
@@ -243,7 +272,17 @@ fun MainAppContent(
                             activeActionItem = item
                         },
                         onCreateFolderClick = { showCreateFolderDialog = true },
-                        onDeleteSelectedClick = { showDeleteBatchDialog = true },
+                        onDeleteSelectedClick = {
+                            if (confirmDeleteSetting) {
+                                showDeleteBatchDialog = true
+                            } else {
+                                val count = viewModel.selectedFiles.value.size
+                                viewModel.deleteSelected { success ->
+                                    val msg = if (success) "Deleted $count items" else "Could not delete some items"
+                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
                         onShareSelectedClick = { items ->
                             FileUtils.shareFiles(context, items.map { it.file })
                         }
@@ -253,11 +292,11 @@ fun MainAppContent(
                     CategoryScreen(
                         category = screen.category,
                         viewModel = viewModel,
-                        onNavigateBack = { currentScreen = Screen.Home },
+                        onNavigateBack = { popBack() },
                         onFileClick = { item ->
                             if (item.isDirectory) {
                                 viewModel.navigateTo(item.file)
-                                currentScreen = Screen.Explorer
+                                navigateTo(Screen.Explorer)
                             } else {
                                 FileUtils.openFile(context, item.file)
                             }
@@ -270,7 +309,8 @@ fun MainAppContent(
                 is Screen.Settings -> {
                     SettingsScreen(
                         viewModel = viewModel,
-                        onNavigateBack = { currentScreen = Screen.Home }
+                        hasStoragePermission = hasStoragePermission,
+                        onNavigateBack = { popBack() }
                     )
                 }
             }
@@ -286,7 +326,16 @@ fun MainAppContent(
             onOpen = { item -> FileUtils.openFile(context, item.file) },
             onShare = { item -> FileUtils.shareFiles(context, listOf(item.file)) },
             onRename = { item -> renameTargetItem = item },
-            onDelete = { item -> deleteTargetItem = item },
+            onDelete = { item ->
+                if (confirmDeleteSetting) {
+                    deleteTargetItem = item
+                } else {
+                    viewModel.deleteFile(item.file) { success ->
+                        val msg = if (success) "Deleted" else "Failed to delete"
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
             onProperties = { item -> propertiesTargetItem = item }
         )
     }

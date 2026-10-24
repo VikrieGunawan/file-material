@@ -74,15 +74,28 @@ private val DarkColorScheme = darkColorScheme(
 fun FileMaterialTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    amoledDark: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val colorScheme: ColorScheme = when {
+    val baseScheme: ColorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
+    }
+
+    val colorScheme = if (darkTheme && amoledDark) {
+        baseScheme.copy(
+            background = androidx.compose.ui.graphics.Color.Black,
+            surface = androidx.compose.ui.graphics.Color.Black,
+            surfaceContainer = androidx.compose.ui.graphics.Color(0xFF0F1115),
+            surfaceContainerHigh = androidx.compose.ui.graphics.Color(0xFF181B20),
+            surfaceContainerLowest = androidx.compose.ui.graphics.Color.Black
+        )
+    } else {
+        baseScheme
     }
 
     val view = LocalView.current

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material3.Card
@@ -21,15 +22,18 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.file.material.R
 import com.file.material.data.model.StorageInfo
@@ -62,15 +66,19 @@ fun StorageCard(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
+            // Header: Title & Expressive Percentage Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
+                            .size(46.dp)
                             .clip(IconContainerShapeExpressive)
                             .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
@@ -82,32 +90,43 @@ fun StorageCard(
                             modifier = Modifier.size(24.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(14.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
                             text = stringResource(R.string.storage_internal),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = "${(animatedProgress * 100).toInt()}% used",
+                            text = "Main Memory",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                Text(
-                    text = "${storageInfo.usedFormatted} / ${storageInfo.totalFormatted}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Expressive Pill Badge for Usage
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = "${(animatedProgress * 100).toInt()}% Used",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Smooth Expressive Progress Indicator
+            // Smooth Expressive Progress Bar
             LinearProgressIndicator(
                 progress = { animatedProgress },
                 modifier = Modifier
@@ -119,27 +138,30 @@ fun StorageCard(
                 strokeCap = StrokeCap.Round
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Storage Details Row
+            // Responsive 3-Tile Storage Statistics Grid
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                StorageStatItem(
+                StorageStatTile(
                     label = stringResource(R.string.storage_used),
                     value = storageInfo.usedFormatted,
-                    dotColor = MaterialTheme.colorScheme.primary
+                    indicatorColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f)
                 )
-                StorageStatItem(
+                StorageStatTile(
                     label = stringResource(R.string.storage_free),
                     value = storageInfo.freeFormatted,
-                    dotColor = MaterialTheme.colorScheme.tertiary
+                    indicatorColor = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.weight(1f)
                 )
-                StorageStatItem(
+                StorageStatTile(
                     label = stringResource(R.string.storage_total),
                     value = storageInfo.totalFormatted,
-                    dotColor = MaterialTheme.colorScheme.outline
+                    indicatorColor = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -147,29 +169,50 @@ fun StorageCard(
 }
 
 @Composable
-private fun StorageStatItem(
+private fun StorageStatTile(
     label: String,
     value: String,
-    dotColor: androidx.compose.ui.graphics.Color
+    indicatorColor: Color,
+    modifier: Modifier = Modifier
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer
+    ) {
+        Column(
             modifier = Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(dotColor)
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = "$label: ",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(indicatorColor)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
