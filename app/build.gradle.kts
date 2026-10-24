@@ -17,6 +17,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resourceConfigurations += listOf("en")
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
         vectorDrawables {
             useSupportLibrary = true
         }
