@@ -1,26 +1,47 @@
 package com.file.material.ui.components
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CalendarToday
+import androidx.compose.material.icons.rounded.Category
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.CreateNewFolder
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DriveFileRenameOutline
+import androidx.compose.material.icons.rounded.Fingerprint
+import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.OpenInBrowser
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,16 +52,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.file.material.R
 import com.file.material.data.model.FileItem
 import com.file.material.ui.theme.ButtonShapeExpressive
 import com.file.material.ui.theme.DialogShapeExpressive
+import com.file.material.ui.theme.IconContainerShapeExpressive
 import com.file.material.utils.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @Composable
 fun CreateFolderDialog(
@@ -246,6 +276,8 @@ fun FilePropertiesDialog(
     item: FileItem,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     var md5Hash by remember { mutableStateOf("Calculating...") }
 
     LaunchedEffect(item) {
@@ -258,47 +290,108 @@ fun FilePropertiesDialog(
         }
     }
 
+    val (icon, tint, bgColor) = getFileVisuals(item)
+
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = DialogShapeExpressive,
-        icon = {
-            Icon(
-                imageVector = Icons.Rounded.Info,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-        },
         title = {
-            Text(
-                text = stringResource(R.string.dialog_properties_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(IconContainerShapeExpressive)
+                        .background(bgColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = tint,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = if (item.isDirectory) "Folder · ${item.childCount} items" else "${FileUtils.formatSize(item.size)} · ${item.extension.uppercase()}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         },
         text = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                PropertyRow(label = "Name", value = item.name)
-                PropertyRow(label = "Location", value = item.path)
-                PropertyRow(
-                    label = "Size",
-                    value = if (item.isDirectory) "${item.childCount} items" else "${FileUtils.formatSize(item.size)} (${item.size} bytes)"
-                )
-                PropertyRow(label = "Type", value = if (item.isDirectory) "Folder" else item.mimeType.ifBlank { item.extension.uppercase() })
-                PropertyRow(label = "Modified", value = FileUtils.formatDate(item.lastModified))
-                PropertyRow(
-                    label = "Permissions",
-                    value = buildString {
-                        append(if (item.file.canRead()) "R" else "-")
-                        append(if (item.file.canWrite()) "W" else "-")
-                        append(if (item.file.canExecute()) "X" else "-")
+                // Location / Path
+                PropertyItemCard(
+                    icon = Icons.Rounded.Folder,
+                    label = "Location",
+                    value = item.path,
+                    onCopy = {
+                        clipboardManager.setText(AnnotatedString(item.path))
+                        Toast.makeText(context, "Path copied to clipboard", Toast.LENGTH_SHORT).show()
                     }
                 )
+
+                // Size
+                PropertyItemCard(
+                    icon = Icons.Rounded.Storage,
+                    label = "Size",
+                    value = if (item.isDirectory) "${item.childCount} items inside" else "${FileUtils.formatSize(item.size)} (${item.size} bytes)"
+                )
+
+                // Date Modified
+                PropertyItemCard(
+                    icon = Icons.Rounded.CalendarToday,
+                    label = "Last Modified",
+                    value = FileUtils.formatDate(item.lastModified)
+                )
+
+                // MIME Type
+                PropertyItemCard(
+                    icon = Icons.Rounded.Category,
+                    label = "Type",
+                    value = if (item.isDirectory) "Folder" else item.mimeType.ifBlank { item.extension.uppercase() }
+                )
+
+                // Access Permissions
+                PropertyItemCard(
+                    icon = Icons.Rounded.Security,
+                    label = "Access Rights",
+                    value = buildString {
+                        append(if (item.file.canRead()) "Read: Yes" else "Read: No")
+                        append(" · ")
+                        append(if (item.file.canWrite()) "Write: Yes" else "Write: No")
+                    }
+                )
+
+                // MD5 Hash (for files)
                 if (!item.isDirectory) {
-                    PropertyRow(label = "MD5 Hash", value = md5Hash)
+                    PropertyItemCard(
+                        icon = Icons.Rounded.Fingerprint,
+                        label = "MD5 Hash",
+                        value = md5Hash,
+                        onCopy = {
+                            clipboardManager.setText(AnnotatedString(md5Hash))
+                            Toast.makeText(context, "MD5 copied to clipboard", Toast.LENGTH_SHORT).show()
+                        }
+                    )
                 }
             }
         },
@@ -314,18 +407,153 @@ fun FilePropertiesDialog(
 }
 
 @Composable
-private fun PropertyRow(label: String, value: String) {
-    Column(modifier = Modifier.padding(vertical = 6.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+private fun PropertyItemCard(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    onCopy: (() -> Unit)? = null
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            if (onCopy != null) {
+                IconButton(onClick = onCopy, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = Icons.Rounded.ContentCopy,
+                        contentDescription = "Copy",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
     }
+}
+
+@Composable
+fun RestrictedFolderDialog(
+    folder: File,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = DialogShapeExpressive,
+        icon = {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.errorContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        },
+        title = {
+            Text(
+                text = "Access Restricted by Android",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "Android 11+ security policies strictly restrict direct access to \"${folder.name}\" (/Android/${folder.name}) to protect app data privacy.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "💡 Shizuku Access Required",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "To gain full, unrestricted read & write access to Android/data and Android/obb without root, you can activate Shizuku via Wireless ADB.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app"))
+                    context.startActivity(intent)
+                },
+                shape = ButtonShapeExpressive
+            ) {
+                Icon(Icons.Rounded.OpenInBrowser, null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Get Shizuku")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                shape = ButtonShapeExpressive
+            ) {
+                Text("Dismiss")
+            }
+        }
+    )
 }

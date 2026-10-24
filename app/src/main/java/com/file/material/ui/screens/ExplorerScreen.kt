@@ -1,17 +1,22 @@
 package com.file.material.ui.screens
 
+import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +26,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Sort
@@ -28,10 +34,14 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CreateNewFolder
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.ViewList
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -54,6 +64,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -66,6 +77,7 @@ import com.file.material.ui.components.FileGridItem
 import com.file.material.ui.components.FileListItem
 import com.file.material.ui.theme.ButtonShapeExpressive
 import com.file.material.ui.viewmodel.FileViewModel
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,7 +88,8 @@ fun ExplorerScreen(
     onFileMoreClick: (FileItem) -> Unit,
     onCreateFolderClick: () -> Unit,
     onDeleteSelectedClick: () -> Unit,
-    onShareSelectedClick: (List<FileItem>) -> Unit
+    onShareSelectedClick: (List<FileItem>) -> Unit,
+    onRestrictedFolder: (File) -> Unit
 ) {
     val currentDirectory by viewModel.currentDirectory.collectAsState()
     val breadcrumbs by viewModel.breadcrumbs.collectAsState()
@@ -90,6 +103,13 @@ fun ExplorerScreen(
     var isSortMenuExpanded by remember { mutableStateOf(false) }
 
     val isSelectionMode = selectedFiles.isNotEmpty()
+
+    val isCurrentRestricted = remember(currentDirectory) {
+        val path = currentDirectory.absolutePath
+        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) &&
+                (path.endsWith("/Android/data") || path.endsWith("/Android/obb") ||
+                 path.contains("/Android/data/") || path.contains("/Android/obb/"))
+    }
 
     BackHandler {
         if (isSelectionMode) {
@@ -106,6 +126,7 @@ fun ExplorerScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0.dp),
         topBar = {
             if (isSelectionMode) {
                 TopAppBar(
@@ -285,6 +306,46 @@ fun ExplorerScreen(
                 )
             }
 
+            // Restricted folder banner
+            if (isCurrentRestricted) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .clickable { onRestrictedFolder(currentDirectory) },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Lock,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Restricted Android Folder",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Text(
+                                text = "Android blocks direct access to this folder. Full access requires Shizuku. Tap to learn more.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
             if (fileList.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -293,7 +354,9 @@ fun ExplorerScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (isSearchActive) stringResource(R.string.empty_search) else stringResource(R.string.empty_directory),
+                        text = if (isSearchActive) stringResource(R.string.empty_search)
+                        else if (isCurrentRestricted) "Access restricted by Android OS.\nPair with Shizuku for full access."
+                        else stringResource(R.string.empty_directory),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -314,7 +377,17 @@ fun ExplorerScreen(
                                     if (isSelectionMode) {
                                         viewModel.toggleFileSelection(item)
                                     } else if (item.isDirectory) {
-                                        viewModel.navigateTo(item.file)
+                                        val path = item.file.absolutePath
+                                        val isRestricted = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) &&
+                                                (path.endsWith("/Android/data") || path.endsWith("/Android/obb") ||
+                                                 (item.name.equals("data", ignoreCase = true) && item.file.parentFile?.name.equals("Android", ignoreCase = true)) ||
+                                                 (item.name.equals("obb", ignoreCase = true) && item.file.parentFile?.name.equals("Android", ignoreCase = true)))
+
+                                        if (isRestricted && (item.file.listFiles() == null || item.file.listFiles()?.isEmpty() == true)) {
+                                            onRestrictedFolder(item.file)
+                                        } else {
+                                            viewModel.navigateTo(item.file)
+                                        }
                                     } else {
                                         onFileClick(item)
                                     }
@@ -346,7 +419,17 @@ fun ExplorerScreen(
                                     if (isSelectionMode) {
                                         viewModel.toggleFileSelection(item)
                                     } else if (item.isDirectory) {
-                                        viewModel.navigateTo(item.file)
+                                        val path = item.file.absolutePath
+                                        val isRestricted = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) &&
+                                                (path.endsWith("/Android/data") || path.endsWith("/Android/obb") ||
+                                                 (item.name.equals("data", ignoreCase = true) && item.file.parentFile?.name.equals("Android", ignoreCase = true)) ||
+                                                 (item.name.equals("obb", ignoreCase = true) && item.file.parentFile?.name.equals("Android", ignoreCase = true)))
+
+                                        if (isRestricted && (item.file.listFiles() == null || item.file.listFiles()?.isEmpty() == true)) {
+                                            onRestrictedFolder(item.file)
+                                        } else {
+                                            viewModel.navigateTo(item.file)
+                                        }
                                     } else {
                                         onFileClick(item)
                                     }

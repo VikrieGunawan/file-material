@@ -66,6 +66,7 @@ fun HomeScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0.dp),
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),

@@ -42,6 +42,7 @@ fun CategoryScreen(
     val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0.dp),
         topBar = {
             TopAppBar(
                 title = {

@@ -20,6 +20,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -52,7 +53,9 @@ import com.file.material.ui.components.CreateFolderDialog
 import com.file.material.ui.components.DeleteConfirmDialog
 import com.file.material.ui.components.FileActionSheet
 import com.file.material.ui.components.FilePropertiesDialog
+import com.file.material.ui.components.OpenWithBottomSheet
 import com.file.material.ui.components.RenameDialog
+import com.file.material.ui.components.RestrictedFolderDialog
 import com.file.material.ui.screens.CategoryScreen
 import com.file.material.ui.screens.ExplorerScreen
 import com.file.material.ui.screens.HomeScreen
@@ -60,6 +63,8 @@ import com.file.material.ui.screens.SettingsScreen
 import com.file.material.ui.theme.FileMaterialTheme
 import com.file.material.ui.viewmodel.FileViewModel
 import com.file.material.utils.FileUtils
+import kotlinx.coroutines.launch
+import java.io.File
 
 sealed class Screen {
     object Home : Screen()
@@ -174,27 +179,72 @@ fun MainAppContent(
         popBack()
     }
 
-    // Dialog & Sheet States
+    // Modal Bottom Sheet & Dialog States
+    val coroutineScope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // Action Menu BottomSheet with guaranteed smooth animation
+    val actionSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showActionSheet by remember { mutableStateOf(false) }
     var activeActionItem by remember { mutableStateOf<FileItem?>(null) }
+
+    fun openActionMenu(item: FileItem) {
+        activeActionItem = item
+        showActionSheet = true
+    }
+
+    fun closeActionMenu() {
+        coroutineScope.launch {
+            actionSheetState.hide()
+        }.invokeOnCompletion {
+            if (!actionSheetState.isVisible) {
+                showActionSheet = false
+                activeActionItem = null
+            }
+        }
+    }
+
+    // Custom "Open With" In-App Chooser BottomSheet
+    val openWithSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showOpenWithSheet by remember { mutableStateOf(false) }
+    var openWithTargetItem by remember { mutableStateOf<FileItem?>(null) }
+
+    fun openCustomOpenWith(item: FileItem) {
+        openWithTargetItem = item
+        showOpenWithSheet = true
+    }
+
+    fun closeCustomOpenWith() {
+        coroutineScope.launch {
+            openWithSheetState.hide()
+        }.invokeOnCompletion {
+            if (!openWithSheetState.isVisible) {
+                showOpenWithSheet = false
+                openWithTargetItem = null
+            }
+        }
+    }
+
     var showCreateFolderDialog by remember { mutableStateOf(false) }
     var renameTargetItem by remember { mutableStateOf<FileItem?>(null) }
     var deleteTargetItem by remember { mutableStateOf<FileItem?>(null) }
     var showDeleteBatchDialog by remember { mutableStateOf(false) }
     var propertiesTargetItem by remember { mutableStateOf<FileItem?>(null) }
+    var restrictedFolderTarget by remember { mutableStateOf<File?>(null) }
 
     val confirmDeleteSetting by viewModel.confirmDelete.collectAsState()
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val context = androidx.compose.ui.platform.LocalContext.current
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0.dp),
         bottomBar = {
             if (currentScreen !is Screen.Category) {
-                // Flush bottom navigation bar: background rests completely on bottom screen surface
+                // Flush bottom navigation bar directly touching screen surface with zero gap
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    tonalElevation = 0.dp
+                    tonalElevation = 0.dp,
+                    windowInsets = WindowInsets(0.dp)
                 ) {
                     NavigationBarItem(
                         selected = currentScreen is Screen.Home,
@@ -229,7 +279,7 @@ fun MainAppContent(
             transitionSpec = { fadeIn() togetherWith fadeOut() },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(bottom = innerPadding.calculateBottomPadding()),
             label = "ScreenTransition"
         ) { screen ->
             when (screen) {
@@ -249,11 +299,11 @@ fun MainAppContent(
                                 viewModel.navigateTo(item.file)
                                 navigateTo(Screen.Explorer)
                             } else {
-                                FileUtils.openFile(context, item.file)
+                                openCustomOpenWith(item)
                             }
                         },
                         onFileMoreClick = { item ->
-                            activeActionItem = item
+                            openActionMenu(item)
                         }
                     )
                 }
@@ -265,11 +315,11 @@ fun MainAppContent(
                             if (item.isDirectory) {
                                 viewModel.navigateTo(item.file)
                             } else {
-                                FileUtils.openFile(context, item.file)
+                                openCustomOpenWith(item)
                             }
                         },
                         onFileMoreClick = { item ->
-                            activeActionItem = item
+                            openActionMenu(item)
                         },
                         onCreateFolderClick = { showCreateFolderDialog = true },
                         onDeleteSelectedClick = {
@@ -285,6 +335,9 @@ fun MainAppContent(
                         },
                         onShareSelectedClick = { items ->
                             FileUtils.shareFiles(context, items.map { it.file })
+                        },
+                        onRestrictedFolder = { folder ->
+                            restrictedFolderTarget = folder
                         }
                     )
                 }
@@ -298,11 +351,11 @@ fun MainAppContent(
                                 viewModel.navigateTo(item.file)
                                 navigateTo(Screen.Explorer)
                             } else {
-                                FileUtils.openFile(context, item.file)
+                                openCustomOpenWith(item)
                             }
                         },
                         onFileMoreClick = { item ->
-                            activeActionItem = item
+                            openActionMenu(item)
                         }
                     )
                 }
@@ -317,13 +370,16 @@ fun MainAppContent(
         }
     }
 
-    // Modal Bottom Sheet for Item Actions
-    if (activeActionItem != null) {
+    // Modal Bottom Sheet for Item Actions with smooth animated transitions
+    if (showActionSheet && activeActionItem != null) {
         FileActionSheet(
             item = activeActionItem,
-            sheetState = sheetState,
-            onDismiss = { activeActionItem = null },
-            onOpen = { item -> FileUtils.openFile(context, item.file) },
+            sheetState = actionSheetState,
+            onDismiss = { closeActionMenu() },
+            onOpen = { item ->
+                closeActionMenu()
+                openCustomOpenWith(item)
+            },
             onShare = { item -> FileUtils.shareFiles(context, listOf(item.file)) },
             onRename = { item -> renameTargetItem = item },
             onDelete = { item ->
@@ -337,6 +393,23 @@ fun MainAppContent(
                 }
             },
             onProperties = { item -> propertiesTargetItem = item }
+        )
+    }
+
+    // Custom Open With in-app Bottom Sheet (avoiding Android duplicate dialogs)
+    if (showOpenWithSheet && openWithTargetItem != null) {
+        OpenWithBottomSheet(
+            item = openWithTargetItem,
+            sheetState = openWithSheetState,
+            onDismiss = { closeCustomOpenWith() }
+        )
+    }
+
+    // Dialog: Restricted Android Folder (Android/data or Android/obb)
+    if (restrictedFolderTarget != null) {
+        RestrictedFolderDialog(
+            folder = restrictedFolderTarget!!,
+            onDismiss = { restrictedFolderTarget = null }
         )
     }
 
@@ -404,7 +477,7 @@ fun MainAppContent(
         )
     }
 
-    // Dialog: Properties
+    // Dialog: Properties (Completely overhauled UI with icons and copy buttons)
     if (propertiesTargetItem != null) {
         FilePropertiesDialog(
             item = propertiesTargetItem!!,
