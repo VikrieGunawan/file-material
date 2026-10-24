@@ -1,0 +1,63 @@
+name: Build and Release File Material
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Build Release APK with Gradle
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: File-Material-v1.0.0-beta-release
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/master')
+        with:
+          tag_name: v1.0.0-beta
+          name: "File Material v1.0.0-beta (Release)"
+          body: |
+            ### File Material v1.0.0-beta
+            
+            - Built with Jetpack Compose & Material 3 Expressive
+            - Material You Dynamic Color Support
+            - Rounded Icons & Rounded Typography Scale
+            - Full File Explorer with Storage Analytics & Categories
+            - Target Android: 15 (API 35) · Min Android: 10 (API 29)
+          files: app/build/outputs/apk/release/*.apk
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
