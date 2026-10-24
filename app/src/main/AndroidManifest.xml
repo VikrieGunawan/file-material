@@ -27,6 +27,12 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:mimeType="*/*" />
         </intent>
+        <package android:name="moe.shizuku.privileged.api" />
+        <package android:name="com.stellar.app" />
+        <package android:name="io.github.a13e300.stellar" />
+        <package android:name="com.stellar.shizuku" />
+        <package android:name="com.rosan.dhizuku" />
+        <package android:name="moe.shizuku.privileged.api.plus" />
     </queries>
 
     <application
@@ -38,6 +44,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FileMaterial"
         android:requestLegacyExternalStorage="true"
+        android:enableOnBackInvokedCallback="true"
         tools:targetApi="35">
 
         <activity

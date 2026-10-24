@@ -9,6 +9,7 @@ import com.file.material.data.model.SortBy
 import com.file.material.data.model.SortOrder
 import com.file.material.data.model.StorageInfo
 import com.file.material.data.model.ViewMode
+import com.file.material.data.preferences.AppPreferences
 import com.file.material.data.repository.FileManagerRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,9 +23,12 @@ import java.io.File
 class FileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = FileManagerRepository(application)
+    private val prefs = AppPreferences(application)
     private val rootDir = repository.rootStorageDirectory
 
-    private val _currentDirectory = MutableStateFlow(rootDir)
+    private val initialDir: File = prefs.lastDirectoryPath?.let { File(it) }?.takeIf { it.exists() && it.isDirectory } ?: rootDir
+
+    private val _currentDirectory = MutableStateFlow(initialDir)
     val currentDirectory: StateFlow<File> = _currentDirectory.asStateFlow()
 
     private val _rawFileList = MutableStateFlow<List<FileItem>>(emptyList())
@@ -32,38 +36,41 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _sortBy = MutableStateFlow(SortBy.NAME)
+    private val _sortBy = MutableStateFlow(prefs.sortBy)
     val sortBy: StateFlow<SortBy> = _sortBy.asStateFlow()
 
-    private val _sortOrder = MutableStateFlow(SortOrder.ASCENDING)
+    private val _sortOrder = MutableStateFlow(prefs.sortOrder)
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 
-    private val _viewMode = MutableStateFlow(ViewMode.LIST)
+    private val _viewMode = MutableStateFlow(prefs.viewMode)
     val viewMode: StateFlow<ViewMode> = _viewMode.asStateFlow()
 
-    private val _showHidden = MutableStateFlow(false)
+    private val _showHidden = MutableStateFlow(prefs.showHidden)
     val showHidden: StateFlow<Boolean> = _showHidden.asStateFlow()
 
-    private val _dynamicColor = MutableStateFlow(true)
+    private val _dynamicColor = MutableStateFlow(prefs.dynamicColor)
     val dynamicColor: StateFlow<Boolean> = _dynamicColor.asStateFlow()
 
-    private val _darkTheme = MutableStateFlow<Boolean?>(null)
+    private val _darkTheme = MutableStateFlow<Boolean?>(prefs.darkTheme)
     val darkTheme: StateFlow<Boolean?> = _darkTheme.asStateFlow()
 
-    private val _amoledDark = MutableStateFlow(false)
+    private val _amoledDark = MutableStateFlow(prefs.amoledDark)
     val amoledDark: StateFlow<Boolean> = _amoledDark.asStateFlow()
 
-    private val _compactView = MutableStateFlow(false)
+    private val _compactView = MutableStateFlow(prefs.compactView)
     val compactView: StateFlow<Boolean> = _compactView.asStateFlow()
 
-    private val _showFileExtensions = MutableStateFlow(true)
+    private val _showFileExtensions = MutableStateFlow(prefs.showFileExtensions)
     val showFileExtensions: StateFlow<Boolean> = _showFileExtensions.asStateFlow()
 
-    private val _confirmDelete = MutableStateFlow(true)
+    private val _confirmDelete = MutableStateFlow(prefs.confirmDelete)
     val confirmDelete: StateFlow<Boolean> = _confirmDelete.asStateFlow()
 
-    private val _showFullPaths = MutableStateFlow(false)
+    private val _showFullPaths = MutableStateFlow(prefs.showFullPaths)
     val showFullPaths: StateFlow<Boolean> = _showFullPaths.asStateFlow()
+
+    private val _predictiveBackEnabled = MutableStateFlow(prefs.predictiveBackEnabled)
+    val predictiveBackEnabled: StateFlow<Boolean> = _predictiveBackEnabled.asStateFlow()
 
     private val _selectedFiles = MutableStateFlow<Set<FileItem>>(emptySet())
     val selectedFiles: StateFlow<Set<FileItem>> = _selectedFiles.asStateFlow()
@@ -128,6 +135,7 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
     fun navigateTo(directory: File) {
         if (directory.exists() && directory.isDirectory) {
             _currentDirectory.value = directory
+            prefs.lastDirectoryPath = directory.absolutePath
             _searchQuery.value = ""
             clearSelection()
             refresh()
@@ -154,24 +162,60 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
             _sortBy.value = sort
             _sortOrder.value = SortOrder.ASCENDING
         }
+        prefs.sortBy = _sortBy.value
+        prefs.sortOrder = _sortOrder.value
         refresh()
     }
 
     fun setViewMode(mode: ViewMode) {
         _viewMode.value = mode
+        prefs.viewMode = mode
     }
 
     fun setShowHidden(show: Boolean) {
         _showHidden.value = show
+        prefs.showHidden = show
         refresh()
     }
 
     fun setDynamicColor(enabled: Boolean) {
         _dynamicColor.value = enabled
+        prefs.dynamicColor = enabled
     }
 
     fun setDarkTheme(dark: Boolean?) {
         _darkTheme.value = dark
+        prefs.darkTheme = dark
+    }
+
+    fun setAmoledDark(enabled: Boolean) {
+        _amoledDark.value = enabled
+        prefs.amoledDark = enabled
+    }
+
+    fun setCompactView(enabled: Boolean) {
+        _compactView.value = enabled
+        prefs.compactView = enabled
+    }
+
+    fun setShowFileExtensions(enabled: Boolean) {
+        _showFileExtensions.value = enabled
+        prefs.showFileExtensions = enabled
+    }
+
+    fun setConfirmDelete(enabled: Boolean) {
+        _confirmDelete.value = enabled
+        prefs.confirmDelete = enabled
+    }
+
+    fun setShowFullPaths(enabled: Boolean) {
+        _showFullPaths.value = enabled
+        prefs.showFullPaths = enabled
+    }
+
+    fun setPredictiveBackEnabled(enabled: Boolean) {
+        _predictiveBackEnabled.value = enabled
+        prefs.predictiveBackEnabled = enabled
     }
 
     fun toggleFileSelection(item: FileItem) {
@@ -235,26 +279,6 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun setAmoledDark(enabled: Boolean) {
-        _amoledDark.value = enabled
-    }
-
-    fun setCompactView(enabled: Boolean) {
-        _compactView.value = enabled
-    }
-
-    fun setShowFileExtensions(enabled: Boolean) {
-        _showFileExtensions.value = enabled
-    }
-
-    fun setConfirmDelete(enabled: Boolean) {
-        _confirmDelete.value = enabled
-    }
-
-    fun setShowFullPaths(enabled: Boolean) {
-        _showFullPaths.value = enabled
-    }
-
     fun cleanTemporaryFiles(onResult: (Long, Int) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -266,6 +290,7 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resetSettingsToDefault() {
+        prefs.resetAll()
         _dynamicColor.value = true
         _darkTheme.value = null
         _amoledDark.value = false
@@ -274,10 +299,11 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
         _showFileExtensions.value = true
         _confirmDelete.value = true
         _showFullPaths.value = false
+        _predictiveBackEnabled.value = true
         _sortBy.value = SortBy.NAME
         _sortOrder.value = SortOrder.ASCENDING
         _viewMode.value = ViewMode.LIST
+        _currentDirectory.value = rootDir
         refresh()
     }
 }
-

@@ -337,7 +337,7 @@ fun ExplorerScreen(
                                 color = MaterialTheme.colorScheme.error
                             )
                             Text(
-                                text = "Android blocks direct access to this folder. Full access requires Shizuku. Tap to learn more.",
+                                text = "Android blocks direct access to this folder. Full access requires Shizuku, Stellar, or Root. Tap to configure.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -355,7 +355,7 @@ fun ExplorerScreen(
                 ) {
                     Text(
                         text = if (isSearchActive) stringResource(R.string.empty_search)
-                        else if (isCurrentRestricted) "Access restricted by Android OS.\nPair with Shizuku for full access."
+                        else if (isCurrentRestricted) "Access restricted by Android OS.\nUnlock using Shizuku, Stellar, or Root."
                         else stringResource(R.string.empty_directory),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

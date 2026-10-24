@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.Category
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.CreateNewFolder
 import androidx.compose.material.icons.rounded.Delete
@@ -28,10 +29,12 @@ import androidx.compose.material.icons.rounded.DriveFileRenameOutline
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Launch
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.OpenInBrowser
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Storage
+import com.file.material.utils.PrivilegedServiceUtils
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -478,6 +481,9 @@ fun RestrictedFolderDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val privilegedApps = remember { PrivilegedServiceUtils.getPrivilegedApps(context) }
+    val installedApp = remember { privilegedApps.firstOrNull { it.isInstalled } }
+    val isRoot = remember { PrivilegedServiceUtils.isRootAvailable() }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -506,53 +512,140 @@ fun RestrictedFolderDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 Text(
-                    text = "Android 11+ security policies strictly restrict direct access to \"${folder.name}\" (/Android/${folder.name}) to protect app data privacy.",
+                    text = "Android 11+ strictly blocks file managers from directly accessing \"${folder.name}\" (/Android/${folder.name}) to protect app sandboxes.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+
+                // Installed Privileged Manager Detection
+                if (installedApp != null) {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Rounded.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Detected: ${installedApp.name}",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "${installedApp.name} is installed on your device. Start the service or grant privileges to unlock restricted folders.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Button(
+                                onClick = {
+                                    PrivilegedServiceUtils.launchApp(context, installedApp.packageName)
+                                },
+                                shape = ButtonShapeExpressive,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            ) {
+                                Icon(Icons.Rounded.Launch, null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Open ${installedApp.name}")
+                            }
+                        }
+                    }
+                }
+
+                // Supported Methods (Not just Wireless!)
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Text(
-                            text = "💡 Shizuku Access Required",
+                            text = "⚡ Activation Methods (Shizuku, Stellar & Forks)",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "To gain full, unrestricted read & write access to Android/data and Android/obb without root, you can activate Shizuku via Wireless ADB.",
+                            text = "1. Root Access (Magisk / KernelSU / APatch): One-tap start directly with superuser rights.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Text(
+                            text = "2. PC ADB (USB): Connect to computer and execute the startup script via terminal.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "3. Wireless ADB: On-device pairing without a computer (Android 11+).",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Download options if not installed
+                if (installedApp == null) {
+                    Text(
+                        text = "Compatible Privileged Managers:",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { PrivilegedServiceUtils.openUrl(context, "https://shizuku.rikka.app") },
+                            shape = ButtonShapeExpressive,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Rounded.OpenInBrowser, null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Shizuku")
+                        }
+                        OutlinedButton(
+                            onClick = { PrivilegedServiceUtils.openUrl(context, "https://github.com/a13e300/Stellar") },
+                            shape = ButtonShapeExpressive,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Rounded.OpenInBrowser, null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Stellar")
+                        }
                     }
                 }
             }
         },
         confirmButton = {
             Button(
-                onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app"))
-                    context.startActivity(intent)
-                },
-                shape = ButtonShapeExpressive
-            ) {
-                Icon(Icons.Rounded.OpenInBrowser, null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Get Shizuku")
-            }
-        },
-        dismissButton = {
-            TextButton(
                 onClick = onDismiss,
                 shape = ButtonShapeExpressive
             ) {
-                Text("Dismiss")
+                Text("Got It")
             }
         }
     )

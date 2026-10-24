@@ -16,13 +16,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Home
@@ -233,6 +240,7 @@ fun MainAppContent(
     var restrictedFolderTarget by remember { mutableStateOf<File?>(null) }
 
     val confirmDeleteSetting by viewModel.confirmDelete.collectAsState()
+    val predictiveBackEnabled by viewModel.predictiveBackEnabled.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -240,11 +248,11 @@ fun MainAppContent(
         contentWindowInsets = WindowInsets(0.dp),
         bottomBar = {
             if (currentScreen !is Screen.Category) {
-                // Flush bottom navigation bar directly touching screen surface with zero gap
+                // Navigation bar with standard system navigation insets (proper breathing room away from gesture bar)
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     tonalElevation = 0.dp,
-                    windowInsets = WindowInsets(0.dp)
+                    windowInsets = NavigationBarDefaults.windowInsets
                 ) {
                     NavigationBarItem(
                         selected = currentScreen is Screen.Home,
@@ -276,7 +284,27 @@ fun MainAppContent(
     ) { innerPadding ->
         AnimatedContent(
             targetState = currentScreen,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            transitionSpec = {
+                if (predictiveBackEnabled) {
+                    (slideInHorizontally(
+                        animationSpec = tween(350, easing = FastOutSlowInEasing),
+                        initialOffsetX = { fullWidth -> (fullWidth * 0.2f).toInt() }
+                    ) + scaleIn(
+                        animationSpec = tween(350, easing = FastOutSlowInEasing),
+                        initialScale = 0.95f
+                    ) + fadeIn(animationSpec = tween(300))).togetherWith(
+                        slideOutHorizontally(
+                            animationSpec = tween(350, easing = FastOutSlowInEasing),
+                            targetOffsetX = { fullWidth -> -(fullWidth * 0.2f).toInt() }
+                        ) + scaleOut(
+                            animationSpec = tween(350, easing = FastOutSlowInEasing),
+                            targetScale = 0.95f
+                        ) + fadeOut(animationSpec = tween(250))
+                    )
+                } else {
+                    fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(200))
+                }
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = innerPadding.calculateBottomPadding()),
