@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -288,7 +290,8 @@ fun ExplorerScreen(
                     onClick = onCreateFolderClick,
                     shape = CircleShape,
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(bottom = 76.dp)
                 ) {
                     Icon(Icons.Rounded.CreateNewFolder, contentDescription = "New Folder")
                 }
@@ -373,10 +376,17 @@ fun ExplorerScreen(
                     )
                 }
             } else {
+                val navBarBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
                 if (viewMode == ViewMode.LIST) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                        contentPadding = PaddingValues(
+                            start = 8.dp,
+                            end = 8.dp,
+                            top = 6.dp,
+                            bottom = 110.dp + navBarBottomInset
+                        )
                     ) {
                         items(fileList, key = { it.path }) { item ->
                             val isSelected = selectedFiles.contains(item)
@@ -416,7 +426,12 @@ fun ExplorerScreen(
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(3),
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(12.dp),
+                        contentPadding = PaddingValues(
+                            start = 12.dp,
+                            end = 12.dp,
+                            top = 10.dp,
+                            bottom = 110.dp + navBarBottomInset
+                        ),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {

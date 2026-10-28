@@ -30,14 +30,12 @@ fun CategoryCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    Card(
+    LiquidGlassCard(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         shape = CardShapeExpressive,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = 4.dp,
+        blurRadius = 20.dp
     ) {
         Column(
             modifier = Modifier

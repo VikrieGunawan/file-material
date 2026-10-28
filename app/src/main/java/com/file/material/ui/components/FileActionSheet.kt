@@ -88,13 +88,11 @@ fun FileActionSheet(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Hero File Preview Card
-            Card(
+            LiquidGlassCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                elevation = 6.dp,
+                blurRadius = 22.dp
             ) {
                 Row(
                     modifier = Modifier
@@ -230,13 +228,11 @@ fun FileActionSheet(
             }
 
             // Secondary Grouped Actions Card (Rename & Properties)
-            Card(
+            LiquidGlassCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                elevation = 4.dp,
+                blurRadius = 18.dp
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     ExpressiveActionItem(
@@ -267,19 +263,16 @@ fun FileActionSheet(
             }
 
             // Destructive Action Card (Delete)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .clickable {
-                        onDismiss()
-                        onDelete(item)
-                    },
+            LiquidGlassCard(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    onDismiss()
+                    onDelete(item)
+                },
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                tintColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.40f),
+                elevation = 4.dp,
+                blurRadius = 18.dp
             ) {
                 Row(
                     modifier = Modifier

@@ -52,14 +52,14 @@ fun StorageCard(
         label = "storageProgress"
     )
 
-    Card(
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+
+    LiquidGlassCard(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         shape = CardShapeExpressive,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = 8.dp,
+        blurRadius = 25.dp
     ) {
         Column(
             modifier = Modifier
@@ -175,10 +175,15 @@ private fun StorageStatTile(
     indicatorColor: Color,
     modifier: Modifier = Modifier
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer
+        color = MaterialTheme.colorScheme.surface.copy(alpha = if (isDark) 0.45f else 0.55f),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            Color.White.copy(alpha = if (isDark) 0.12f else 0.40f)
+        )
     ) {
         Column(
             modifier = Modifier

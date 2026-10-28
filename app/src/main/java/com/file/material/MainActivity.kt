@@ -23,10 +23,16 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
+import com.file.material.ui.components.FloatingLiquidGlassNavBar
+import com.file.material.ui.components.LiquidNavItem
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Folder
@@ -243,46 +249,18 @@ fun MainAppContent(
 
     val confirmDeleteSetting by viewModel.confirmDelete.collectAsState()
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = WindowInsets(0.dp),
-        bottomBar = {
-            if (currentScreen !is Screen.Category) {
-                // Navigation bar with standard system navigation insets (proper breathing room away from gesture bar)
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    tonalElevation = 0.dp,
-                    windowInsets = NavigationBarDefaults.windowInsets
-                ) {
-                    NavigationBarItem(
-                        selected = currentScreen is Screen.Home,
-                        onClick = {
-                            if (currentScreen !is Screen.Home) navigateTo(Screen.Home)
-                        },
-                        icon = { Icon(Icons.Rounded.Home, contentDescription = stringResource(R.string.nav_home)) },
-                        label = { Text(stringResource(R.string.nav_home)) }
-                    )
-                    NavigationBarItem(
-                        selected = currentScreen is Screen.Explorer,
-                        onClick = {
-                            if (currentScreen !is Screen.Explorer) navigateTo(Screen.Explorer)
-                        },
-                        icon = { Icon(Icons.Rounded.Folder, contentDescription = stringResource(R.string.nav_browse)) },
-                        label = { Text(stringResource(R.string.nav_browse)) }
-                    )
-                    NavigationBarItem(
-                        selected = currentScreen is Screen.Settings,
-                        onClick = {
-                            if (currentScreen !is Screen.Settings) navigateTo(Screen.Settings)
-                        },
-                        icon = { Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.nav_settings)) },
-                        label = { Text(stringResource(R.string.nav_settings)) }
-                    )
-                }
-            }
-        }
-    ) { innerPadding ->
+    val currentNavItem = when (currentScreen) {
+        is Screen.Home -> LiquidNavItem.HOME
+        is Screen.Explorer -> LiquidNavItem.BROWSE
+        is Screen.Settings -> LiquidNavItem.SETTINGS
+        is Screen.Category -> null
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         AnimatedContent(
             targetState = currentScreen,
             transitionSpec = {
@@ -297,9 +275,7 @@ fun MainAppContent(
                     ) + fadeOut(animationSpec = tween(180))
                 )
             },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = innerPadding.calculateBottomPadding()),
+            modifier = Modifier.fillMaxSize(),
             label = "ScreenTransition"
         ) { screen ->
             when (screen) {
@@ -387,6 +363,24 @@ fun MainAppContent(
                     )
                 }
             }
+        }
+
+        // Floating Liquid Glass Navigation Bar with Dynamic "Pupil" Morphing
+        if (currentNavItem != null) {
+            FloatingLiquidGlassNavBar(
+                selectedItem = currentNavItem,
+                onItemSelected = { item ->
+                    when (item) {
+                        LiquidNavItem.HOME -> if (currentScreen !is Screen.Home) navigateTo(Screen.Home)
+                        LiquidNavItem.BROWSE -> if (currentScreen !is Screen.Explorer) navigateTo(Screen.Explorer)
+                        LiquidNavItem.SETTINGS -> if (currentScreen !is Screen.Settings) navigateTo(Screen.Settings)
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(bottom = 14.dp)
+            )
         }
     }
 

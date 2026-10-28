@@ -34,13 +34,12 @@ fun PermissionCard(
     onGrantClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    LiquidGlassCard(
         modifier = modifier.fillMaxWidth(),
         shape = CardShapeExpressive,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        tintColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+        elevation = 6.dp,
+        blurRadius = 25.dp
     ) {
         Column(
             modifier = Modifier
