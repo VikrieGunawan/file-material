@@ -99,7 +99,6 @@ fun SettingsScreen(
     val showFileExtensions by viewModel.showFileExtensions.collectAsState()
     val confirmDelete by viewModel.confirmDelete.collectAsState()
     val showFullPaths by viewModel.showFullPaths.collectAsState()
-    val predictiveBackEnabled by viewModel.predictiveBackEnabled.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
     val sortBy by viewModel.sortBy.collectAsState()
 
@@ -335,21 +334,6 @@ fun SettingsScreen(
                         subtitle = "Show confirmation dialog before deleting files",
                         checked = confirmDelete,
                         onCheckedChange = { viewModel.setConfirmDelete(it) }
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 12.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
-                    )
-
-                    SettingsToggleRow(
-                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                        iconBg = MaterialTheme.colorScheme.primaryContainer,
-                        iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        title = "Predictive Back Gesture",
-                        subtitle = "Enable smooth predictive gesture animations across screens",
-                        checked = predictiveBackEnabled,
-                        onCheckedChange = { viewModel.setPredictiveBackEnabled(it) }
                     )
 
                     HorizontalDivider(

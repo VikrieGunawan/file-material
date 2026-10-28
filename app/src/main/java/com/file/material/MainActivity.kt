@@ -9,10 +9,8 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
 import android.widget.Toast
-import androidx.activity.BackEventCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,12 +27,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.NavigationBarDefaults
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.ui.graphics.graphicsLayer
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.Flow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Home
@@ -169,7 +162,6 @@ fun MainAppContent(
     hasStoragePermission: Boolean,
     onRequestPermission: () -> Unit
 ) {
-    val predictiveBackEnabled by viewModel.predictiveBackEnabled.collectAsState()
     var isPopping by remember { mutableStateOf(false) }
 
     // BackStack navigation: Back returns to previously opened screen instead of closing app
@@ -192,29 +184,8 @@ fun MainAppContent(
         return false
     }
 
-    // Predictive Back Gesture with interactive gesture progress
-    var backProgress by remember { mutableFloatStateOf(0f) }
-    var isBackGestureActive by remember { mutableStateOf(false) }
-
-    if (predictiveBackEnabled && backStack.size > 1) {
-        PredictiveBackHandler(enabled = backStack.size > 1) { progress: Flow<BackEventCompat> ->
-            try {
-                isBackGestureActive = true
-                progress.collect { backEvent ->
-                    backProgress = backEvent.progress
-                }
-                popBack()
-            } catch (e: CancellationException) {
-                // User cancelled gesture by swiping back to edge
-            } finally {
-                backProgress = 0f
-                isBackGestureActive = false
-            }
-        }
-    } else {
-        BackHandler(enabled = backStack.size > 1) {
-            popBack()
-        }
+    BackHandler(enabled = backStack.size > 1) {
+        popBack()
     }
 
     // Modal Bottom Sheet & Dialog States
@@ -328,17 +299,7 @@ fun MainAppContent(
             },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = innerPadding.calculateBottomPadding())
-                .graphicsLayer {
-                    if (isBackGestureActive && backProgress > 0f) {
-                        translationX = backProgress * 120.dp.toPx()
-                        alpha = 1f - (backProgress * 0.2f)
-                        scaleX = 1f - (backProgress * 0.04f)
-                        scaleY = 1f - (backProgress * 0.04f)
-                        shape = RoundedCornerShape((backProgress * 24).dp)
-                        clip = true
-                    }
-                },
+                .padding(bottom = innerPadding.calculateBottomPadding()),
             label = "ScreenTransition"
         ) { screen ->
             when (screen) {

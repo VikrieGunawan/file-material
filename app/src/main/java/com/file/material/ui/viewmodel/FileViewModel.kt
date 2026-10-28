@@ -69,9 +69,6 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
     private val _showFullPaths = MutableStateFlow(prefs.showFullPaths)
     val showFullPaths: StateFlow<Boolean> = _showFullPaths.asStateFlow()
 
-    private val _predictiveBackEnabled = MutableStateFlow(prefs.predictiveBackEnabled)
-    val predictiveBackEnabled: StateFlow<Boolean> = _predictiveBackEnabled.asStateFlow()
-
     private val _selectedFiles = MutableStateFlow<Set<FileItem>>(emptySet())
     val selectedFiles: StateFlow<Set<FileItem>> = _selectedFiles.asStateFlow()
 
@@ -213,11 +210,6 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
         prefs.showFullPaths = enabled
     }
 
-    fun setPredictiveBackEnabled(enabled: Boolean) {
-        _predictiveBackEnabled.value = enabled
-        prefs.predictiveBackEnabled = enabled
-    }
-
     fun toggleFileSelection(item: FileItem) {
         val current = _selectedFiles.value.toMutableSet()
         if (current.contains(item)) {
@@ -299,7 +291,6 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
         _showFileExtensions.value = true
         _confirmDelete.value = true
         _showFullPaths.value = false
-        _predictiveBackEnabled.value = true
         _sortBy.value = SortBy.NAME
         _sortOrder.value = SortOrder.ASCENDING
         _viewMode.value = ViewMode.LIST

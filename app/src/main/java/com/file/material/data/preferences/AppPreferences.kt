@@ -91,10 +91,6 @@ class AppPreferences(context: Context) {
         }
         set(value) = prefs.edit().putString(KEY_SORT_ORDER, value.name).apply()
 
-    var predictiveBackEnabled: Boolean
-        get() = prefs.getBoolean(KEY_PREDICTIVE_BACK, true)
-        set(value) = prefs.edit().putBoolean(KEY_PREDICTIVE_BACK, value).apply()
-
     fun resetAll() {
         prefs.edit().clear().apply()
     }
@@ -113,6 +109,5 @@ class AppPreferences(context: Context) {
         private const val KEY_VIEW_MODE = "view_mode"
         private const val KEY_SORT_BY = "sort_by"
         private const val KEY_SORT_ORDER = "sort_order"
-        private const val KEY_PREDICTIVE_BACK = "predictive_back_enabled"
     }
 }
