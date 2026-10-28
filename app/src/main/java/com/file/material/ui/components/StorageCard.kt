@@ -58,8 +58,7 @@ fun StorageCard(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         shape = CardShapeExpressive,
-        elevation = 8.dp,
-        blurRadius = 25.dp
+        elevation = 8.dp
     ) {
         Column(
             modifier = Modifier

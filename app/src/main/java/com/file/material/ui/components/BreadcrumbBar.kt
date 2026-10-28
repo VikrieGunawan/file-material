@@ -48,6 +48,8 @@ fun BreadcrumbBar(
             val isLast = index == breadcrumbs.lastIndex
             val displayName = if (index == 0) "Internal Storage" else file.name
 
+            val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+
             AssistChip(
                 onClick = { onNavigate(file) },
                 label = {
@@ -68,9 +70,9 @@ fun BreadcrumbBar(
                 shape = ChipShapeExpressive,
                 colors = AssistChipDefaults.assistChipColors(
                     containerColor = if (isLast) {
-                        MaterialTheme.colorScheme.primaryContainer
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = if (isDark) 0.85f else 0.80f)
                     } else {
-                        MaterialTheme.colorScheme.surfaceContainer
+                        MaterialTheme.colorScheme.surface.copy(alpha = if (isDark) 0.60f else 0.70f)
                     },
                     labelColor = if (isLast) {
                         MaterialTheme.colorScheme.onPrimaryContainer
@@ -78,7 +80,10 @@ fun BreadcrumbBar(
                         MaterialTheme.colorScheme.onSurface
                     }
                 ),
-                border = null
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    androidx.compose.ui.graphics.Color.White.copy(alpha = if (isDark) 0.16f else 0.35f)
+                )
             )
 
             if (!isLast) {

@@ -78,6 +78,7 @@ import com.file.material.ui.components.BreadcrumbBar
 import com.file.material.ui.components.ExpressiveLoadingIndicator
 import com.file.material.ui.components.FileGridItem
 import com.file.material.ui.components.FileListItem
+import com.file.material.ui.components.LiquidGlassCard
 import com.file.material.ui.theme.ButtonShapeExpressive
 import com.file.material.ui.viewmodel.FileViewModel
 import java.io.File
@@ -313,15 +314,14 @@ fun ExplorerScreen(
 
             // Restricted folder banner
             if (isCurrentRestricted) {
-                Card(
+                LiquidGlassCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .clickable { onRestrictedFolder(currentDirectory) },
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
-                    )
+                    tintColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.40f),
+                    elevation = 3.dp,
+                    onClick = { onRestrictedFolder(currentDirectory) }
                 ) {
                     Row(
                         modifier = Modifier.padding(14.dp),

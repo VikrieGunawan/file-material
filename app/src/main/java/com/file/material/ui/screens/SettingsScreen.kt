@@ -77,6 +77,7 @@ import androidx.compose.ui.unit.dp
 import com.file.material.R
 import com.file.material.data.model.SortBy
 import com.file.material.data.model.ViewMode
+import com.file.material.ui.components.LiquidGlassCard
 import com.file.material.ui.theme.ButtonShapeExpressive
 import com.file.material.ui.theme.CardShapeExpressive
 import com.file.material.ui.theme.ChipShapeExpressive
@@ -149,16 +150,10 @@ fun SettingsScreen(
         ) {
             // Storage Permission Status
             SettingsSectionHeader(title = "System Access")
-            Card(
+            LiquidGlassCard(
                 shape = CardShapeExpressive,
-                colors = CardDefaults.cardColors(
-                    containerColor = if (hasStoragePermission) {
-                        MaterialTheme.colorScheme.surfaceContainerHigh
-                    } else {
-                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
-                    }
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                tintColor = if (hasStoragePermission) null else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.40f),
+                elevation = 4.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -218,12 +213,9 @@ fun SettingsScreen(
 
             // Appearance Section
             SettingsSectionHeader(title = stringResource(R.string.settings_appearance))
-            Card(
+            LiquidGlassCard(
                 shape = CardShapeExpressive,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                elevation = 4.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -297,12 +289,9 @@ fun SettingsScreen(
 
             // File Management Preferences
             SettingsSectionHeader(title = stringResource(R.string.settings_preferences))
-            Card(
+            LiquidGlassCard(
                 shape = CardShapeExpressive,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                elevation = 4.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -392,12 +381,9 @@ fun SettingsScreen(
 
             // Tools & Storage Maintenance
             SettingsSectionHeader(title = "Tools & Cleanup")
-            Card(
+            LiquidGlassCard(
                 shape = CardShapeExpressive,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                elevation = 4.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -495,12 +481,9 @@ fun SettingsScreen(
 
             // About Card
             SettingsSectionHeader(title = stringResource(R.string.settings_about))
-            Card(
+            LiquidGlassCard(
                 shape = CardShapeExpressive,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                elevation = 4.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {

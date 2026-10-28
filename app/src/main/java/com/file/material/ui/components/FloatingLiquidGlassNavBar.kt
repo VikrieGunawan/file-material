@@ -41,7 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -97,7 +97,6 @@ fun FloatingLiquidGlassNavBar(
                 .height(66.dp),
             shape = CircleShape,
             elevation = 14.dp,
-            blurRadius = 26.dp,
             borderWidth = 1.2.dp
         ) {
             BoxWithConstraints(
@@ -148,8 +147,7 @@ fun FloatingLiquidGlassNavBar(
                         .fillMaxHeight()
                         .clip(CircleShape)
                         .background(color = pupilColor, shape = CircleShape)
-                        .drawWithContent {
-                            drawContent()
+                        .drawBehind {
                             // Pupil glass specular sheen
                             drawRect(
                                 Brush.verticalGradient(

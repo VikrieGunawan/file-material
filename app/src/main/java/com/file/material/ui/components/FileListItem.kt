@@ -60,19 +60,28 @@ fun FileListItem(
 ) {
     val (icon, tint, bgColor) = getFileVisuals(item)
 
-    Surface(
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
+            .then(
+                if (isSelected) {
+                    Modifier.liquidGlass(
+                        shape = RoundedCornerShape(16.dp),
+                        tintColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
+                        elevation = 3.dp,
+                        isDark = isDark
+                    )
+                } else {
+                    Modifier
+                }
+            )
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
-            ),
-        color = if (isSelected) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-        } else {
-            Color.Transparent
-        }
+            )
     ) {
         Row(
             modifier = Modifier

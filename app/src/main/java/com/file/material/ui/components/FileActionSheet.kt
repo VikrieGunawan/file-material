@@ -91,8 +91,7 @@ fun FileActionSheet(
             LiquidGlassCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(22.dp),
-                elevation = 6.dp,
-                blurRadius = 22.dp
+                elevation = 6.dp
             ) {
                 Row(
                     modifier = Modifier
@@ -231,8 +230,7 @@ fun FileActionSheet(
             LiquidGlassCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                elevation = 4.dp,
-                blurRadius = 18.dp
+                elevation = 4.dp
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     ExpressiveActionItem(
@@ -271,8 +269,7 @@ fun FileActionSheet(
                 },
                 shape = RoundedCornerShape(18.dp),
                 tintColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.40f),
-                elevation = 4.dp,
-                blurRadius = 18.dp
+                elevation = 4.dp
             ) {
                 Row(
                     modifier = Modifier

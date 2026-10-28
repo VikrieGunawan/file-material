@@ -43,7 +43,7 @@ fun FileGridItem(
 ) {
     val (icon, tint, bgColor) = getFileVisuals(item)
 
-    Card(
+    LiquidGlassCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(CardShapeExpressive)
@@ -52,14 +52,10 @@ fun FileGridItem(
                 onLongClick = onLongClick
             ),
         shape = CardShapeExpressive,
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            }
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        tintColor = if (isSelected) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+        } else null,
+        elevation = if (isSelected) 6.dp else 2.dp
     ) {
         Box(
             modifier = Modifier

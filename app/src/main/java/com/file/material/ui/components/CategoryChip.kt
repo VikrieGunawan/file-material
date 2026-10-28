@@ -34,8 +34,7 @@ fun CategoryCard(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         shape = CardShapeExpressive,
-        elevation = 4.dp,
-        blurRadius = 20.dp
+        elevation = 4.dp
     ) {
         Column(
             modifier = Modifier

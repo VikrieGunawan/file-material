@@ -38,8 +38,7 @@ fun PermissionCard(
         modifier = modifier.fillMaxWidth(),
         shape = CardShapeExpressive,
         tintColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
-        elevation = 6.dp,
-        blurRadius = 25.dp
+        elevation = 6.dp
     ) {
         Column(
             modifier = Modifier
