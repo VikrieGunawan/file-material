@@ -2,7 +2,10 @@ package com.file.material.ui.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -42,7 +45,7 @@ fun CategoryScreen(
     val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
-        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0.dp),
+        contentWindowInsets = WindowInsets(0.dp),
         topBar = {
             TopAppBar(
                 title = {
@@ -86,7 +89,8 @@ fun CategoryScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                val navBarBottomInset = androidx.compose.foundation.layout.WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+            } else {
+                val navBarBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
