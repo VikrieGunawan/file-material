@@ -18,7 +18,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resourceConfigurations += listOf("en")
         ndk {
-            abiFilters += listOf("arm64-v8a")
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
         }
         vectorDrawables {
             useSupportLibrary = true
@@ -72,6 +72,9 @@ android {
     }
 
     packaging {
+        jniLibs {
+            keepDebugSymbols += setOf("**/libandroidx.graphics.path.so")
+        }
         resources {
             excludes += setOf(
                 "/META-INF/{AL2.0,LGPL2.1}",

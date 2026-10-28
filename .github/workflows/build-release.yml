@@ -1,4 +1,4 @@
-name: Build and Release File Material
+name: Build File Material
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-release:
@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -46,23 +46,3 @@ jobs:
           name: File-Material-v1.0.0-beta-release
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/master') || github.event_name == 'workflow_dispatch'
-        with:
-          tag_name: v1.0.0-beta
-          name: "File Material v1.0.0-beta (Release)"
-          body: |
-            ### File Material v1.0.0-beta
-            
-            - Built with Jetpack Compose & Material 3 Expressive
-            - Material You Dynamic Color Support
-            - Rounded Icons & Rounded Typography Scale
-            - Full File Explorer with Storage Analytics & Categories
-            - Target Android: 15 (API 35) · Min Android: 10 (API 29)
-          files: app/build/outputs/apk/release/*.apk
-          draft: false
-          prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
