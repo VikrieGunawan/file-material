@@ -24,18 +24,6 @@
 -dontwarn okio.**
 -dontwarn kotlinx.coroutines.**
 
-# Explicitly keep default constructors to resolve R8 constructor warnings
--keep public class com.google.vending.licensing.ILicensingService { void <init>(); }
--keep public class com.android.vending.licensing.ILicensingService { void <init>(); }
--keep public class com.google.android.vending.licensing.ILicensingService { void <init>(); }
--keep class android.support.annotation.Keep { void <init>(); }
--keep,allowrepackaging,allowobfuscation,allowshrinking class * extends androidx.navigation.Navigator { void <init>(); }
--keep,allowshrinking class * extends androidx.compose.ui.node.ModifierNodeElement { void <init>(); }
--keep,allowshrinking class okhttp3.internal.publicsuffix.PublicSuffixDatabase { void <init>(); }
--keep class * implements androidx.versionedparcelable.VersionedParcelable { void <init>(); }
--keep public class androidx.versionedparcelable.ParcelImpl { void <init>(); }
--keep,allowshrinking class * extends androidx.startup.Initializer { void <init>(); }
--keep,allowrepackaging,allowobfuscation @interface androidx.annotation.Keep
 
 # Strip verbose/debug logs in Release builds to shrink code
 -assumenosideeffects class android.util.Log {

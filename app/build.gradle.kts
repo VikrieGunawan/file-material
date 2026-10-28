@@ -73,6 +73,7 @@ android {
 
     packaging {
         jniLibs {
+            useLegacyPackaging = true
             keepDebugSymbols += setOf("**/libandroidx.graphics.path.so")
         }
         resources {
